@@ -3,7 +3,7 @@
 
 <head>
   <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -27,6 +27,7 @@
 </head>
 
 <body id="page-top">
+
 
   <!-- Page Wrapper -->
   <div id="wrapper">
@@ -139,9 +140,9 @@
       </li>
       <!-- Nav Item - library 12 -->
       <li class="nav-item">
-        <a class="nav-link" href="./../getLibraryDashboard?libName=xf_DataAnalytics">
+        <a class="nav-link" href="./../getLibraryDashboard?libName=xf_ML">
           <i class="fas fa-fw fa-folder"></i>
-          <span>xf_DataAnalytics</span></a>
+          <span>xf_ML</span></a>
       </li>
       <!-- Nav Item - library 13 -->
       <li class="nav-item">
@@ -226,13 +227,25 @@
             <div class="card-header py-3">
               <h6 class="m-0 font-weight-bold text-primary">Testing Results</h6>
             </div>
+
+  <div id="cart">
+    <strong>Cart</strong>
+    <span>(</span>
+    <span class="cart-number">0</span>
+    <span>)</span>
+
+    <br />
+    <strong>Datekey</strong>
+    <span class="cart-data">[]</span>
+  </div>
+<span>=================================</span>
             <div class="card-body">
               <div class="table-responsive">
                 <table class="table table-bordered" id="example" width="100%" cellspacing="0" data-page-length="25">
                   <thead>
                     <tr>
+<th width="25"><input type="checkbox" class="checkedAll"></th>
                       <th>Datekey</th>
-                      <th>Status</th>
                       <th>Category</th>
                       <th>Vitis</th>
                       <th>Branch</th>
@@ -250,13 +263,37 @@
                     function setupData() {
                       $(document).ready(function () {
                       $.fn.dataTable.ext.errMode = 'none';  //temport stop error alert
+
+        var mockData = [];
+        for (var i = 0; i < 100; i++) {
+          mockData.push({ Datekey: 1000 + i, name: `name${i}` })
+        }
+        // 单选checkbox
+        $('#example').on('change', 'input.editor-active', function (e) {
+          cart.trigger($(this).data('date_key'));
+          renderCart(cart);
+          renderCheckedAll();
+        });
+
+        // 全选checkbox
+        $('#example').on('change', 'input.checkedAll', function (e) {
+          var isChecked = $(this).is(":checked");
+          $(".editor-active").prop("checked", isChecked);
+          $(".editor-active").each(function () {
+            var dateKey = $(this).data('date_key')
+            isChecked ? cart.add(dateKey) : cart.remove(dateKey);
+          });
+          renderCart(cart);
+        });
+ 
+
                         $('#example')
                         .on( 'error.dt', function ( e, settings, techNote, message ) { //accept error and print in console
                          console.log( 'An error has been reported by DataTables: ', message );} )
 			
                         .DataTable({
                          initComplete: function () {
-                             this.api().columns([1,2,3,4,5,6,7]).every( function () {
+                             this.api().columns([1,2,3,6]).every( function () {
                                  var column = this;
                                  var select = $('<br><select><option value=""></option></select>')
                                      .appendTo( $(column.header()))
@@ -275,6 +312,7 @@
                                  } );
                              } );
                          },
+
                           "order": [[ 0, "desc" ]],
                           "ajax": {
                             "url": "/get_library_dashboard_data/{{libName}}/{{start_date}}/{{end_date}}",
@@ -285,7 +323,21 @@
                           "processing" :  true,
                           "autoWidth": false,
                           "columns": [
-                            { "data": "null",
+
+            {
+              data: null,
+              render: function (data, type, row) {
+                if (type === 'display')
+		 {
+                  return '<input type="checkbox" class="editor-active" data-date_key="' + row.Datekey + '">';
+                }
+                return data;
+              },
+              className: "dt-body-center",
+              bSortable: false,
+            },
+
+                            { "data": "datekey",
                               "render":function(data,type,full,meta){
                                 var tem_link=""
                                 var tem=""
@@ -296,7 +348,6 @@
                                 return tem_link;
                               }
                             },
-                            { "data": "status" },
                             { "data": "category" },
                             { "data": "vitis" },
                             { "data": "branch" },
@@ -308,7 +359,7 @@
                             { "data": "Fail"},
                             { "data": "Unfinished"},
                             { "data": "PassRate"},
-                          ]
+                          ],
                         });
                       });
                     }
