@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="http://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+  <script src="http://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="http://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body>
+
+  <div id="cart">
+    <strong>Cart</strong>
+    <span>(</span>
+    <span class="cart-number">0</span>
+    <span>)</span>
+
+    <br />
+    <strong>Datekey</strong>
+    <span class="cart-data">[]</span>
+  </div>
+
+
+  <span>=================================> sperator</span>
+
+
+
+  <table id="myTable">
+    <thead>
+      <tr>
+        <th width="25"><input type="checkbox" class="checkedAll"></th>
+        <th>Datekey</th>
+        <th>name</th>
+      </tr>
+    </thead>
+
+    <script>
+      function Cart() {
+        this._list = [];
+      };
+
+      Cart.prototype.add = function (key) {
+        if (!this.has(key)) {
+          this._list.push(key)
+        }
+      };
+
+      Cart.prototype.remove = function (key) {
+        if (this.has(key)) {
+          this._list.splice(this.find(key), 1)
+        }
+      };
+
+      Cart.prototype.trigger = function (key) {
+        if (this.has(key)) {
+          this.remove(key)
+        } else {
+          this.add(key)
+        }
+      };
+
+      Cart.prototype.find = function (key) {
+        return this._list.indexOf(key)
+      };
+
+      Cart.prototype.has = function (key) {
+        return this.find(key) !== -1
+      };
+
+      Cart.prototype.list = function () {
+        return this._list;
+      };
+
+      // Cart
+      var cart = new Cart();
+
+
+      function renderCart(cart) {
+        $('.cart-number').text(cart.list().length);
+        $('.cart-data').text(cart.list());
+      };
+
+      function renderCheckedAll() {
+        var keys = [];
+        var selected = $(".editor-active:checked");
+        var all = $(".editor-active");
+        var isSelectedAll = selected.length > 0 && (selected.length === all.length);
+        $(".checkedAll").prop("checked", isSelectedAll);
+      }
+
+    </script>
+    <script>
+      $(document).ready(function () {
+        // Mock data
+        var mockData = [];
+        for (var i = 0; i < 100; i++) {
+          mockData.push({ Datekey: 1000 + i, name: `name${i}` })
+        }
+
+        $('#myTable').on('error.dt', function (e, settings, techNote, message) { //accept error and print in console
+          console.log('An error has been reported by DataTables: ', message);
+        }).DataTable({
+          data: mockData,
+          columns: [
+            {
+              data: null,
+              render: function (data, type, row) {
+                if (type === 'display') {
+                  return '<input type="checkbox" class="editor-active" data-date_key="' + row.Datekey + '">';
+                }
+                return data;
+              },
+              className: "dt-body-center",
+              bSortable: false,
+            },
+            { data: "Datekey" },
+            { data: "name" }
+          ],
+          fnDrawCallback: renderCheckedAll
+        });
+
+        // 单选checkbox
+        $('#myTable').on('change', 'input.editor-active', function (e) {
+          cart.trigger($(this).data('date_key'));
+          renderCart(cart);
+          renderCheckedAll();
+        });
+
+        // 全选checkbox
+        $('#myTable').on('change', 'input.checkedAll', function (e) {
+          var isChecked = $(this).is(":checked");
+          $(".editor-active").prop("checked", isChecked);
+          $(".editor-active").each(function () {
+            var dateKey = $(this).data('date_key')
+            isChecked ? cart.add(dateKey) : cart.remove(dateKey);
+          });
+          renderCart(cart);
+        });
+      });
+    </script>
+
+    <style>
+      /* 隐藏排序按钮 未找到合适的方法 */
+      #myTable>thead>tr>th:first-child {
+        background-image: none;
+      }
+    </style>
+
+  </table>
+
+
+</body>
+
+</html>
